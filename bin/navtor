@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # This is a clone of fff written in Bash
 # Things learned:
 # * Need to remember to init_color
