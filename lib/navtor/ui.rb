@@ -18,7 +18,7 @@ module Navtor
 
     def initialize(file_manager)
       @file_manager = file_manager
-      init_ui
+      init_curses
       init_screen
       @state = UIState.with(
         lines: Curses.lines,
@@ -39,7 +39,7 @@ module Navtor
       @state = @state.reset
     end
 
-    def init_ui
+    def init_curses
       Curses.noecho
       Curses.nonl
       Curses.stdscr.keypad(true)
