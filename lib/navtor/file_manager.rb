@@ -1,5 +1,5 @@
 require 'navtor/ui'
-#require 'pry'
+require 'pry'
 
 module Navtor
   class FileManager
@@ -17,13 +17,8 @@ module Navtor
     end
 
     def ls
-      @entries = (Dir.entries('.') - ['.', '..']).sort
-      @entries.each.with_index do |entry, index|
-        if File.directory?(entry)
-          @entries[index] = "[#{entry}]"
-        end
-      end
-      @ui.calculate_lines
+      @entries = list_entries
+      @ui.calculate_lines(@entries)
     end
 
     def current_entry
@@ -50,6 +45,18 @@ module Navtor
         #Curses.reset_prog_mode
         @ui.init_screen
         @ui.refresh
+      end
+    end
+    private
+
+    # @return Array of files and directories in current directory
+    def list_entries
+      (Dir.entries('.') - ['.', '..']).sort.map.with_index do |entry, index|
+        if File.directory?(entry)
+          "[#{entry}]"
+        else
+          entry
+        end
       end
     end
   end

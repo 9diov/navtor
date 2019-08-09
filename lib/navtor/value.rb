@@ -12,6 +12,12 @@
 #
 require 'navtor/union_value'
 
+class Hash
+  def compact
+    self.to_a.select {|x, y| !y.nil?}.to_h
+  end
+end
+
 module Navtor
   class Utils
     def self.assert_type(var, expected_type, var_name=nil)
@@ -90,11 +96,11 @@ module Navtor
             raise ArgumentError.new("Unexpected hash keys: #{unexpected_keys}")
           end
 
-          missing_keys = self::VALUE_ATTRS - (hash.keys + self.defaults.rsk.keys)
+          missing_keys = self::VALUE_ATTRS - (hash.keys + self.defaults.keys)
           if missing_keys.any?
             raise ArgumentError.new("Missing hash keys: #{missing_keys} (got keys #{hash.keys})")
           end
-          hash = self.class_variable_get(:@@defaults).rsk.merge(hash.compact.rsk)
+          hash = self.class_variable_get(:@@defaults).merge(hash.compact)
 
           new(*hash.values_at(*self::VALUE_ATTRS))
         end
@@ -121,7 +127,7 @@ module Navtor
         end
 
         def self.with_default (hash = {})
-          loose_with self.class_variable_get(:@@defaults).rsk.merge(hash.compact.rsk)
+          loose_with self.class_variable_get(:@@defaults).merge(hash.compact)
         end
 
         def [] (key)

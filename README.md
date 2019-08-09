@@ -7,3 +7,8 @@ navtor is a Ruby-based clone of [fff](https://github.com/dylanaraps/fff/).
 ## Usage
 
 `navtor`
+
+## Use cases
+* List files/directories in current directory
+* Navigate to parent directory
+* Open current file
