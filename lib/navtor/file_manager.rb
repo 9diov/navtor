@@ -2,29 +2,40 @@ require 'navtor/ui'
 require 'pry'
 
 module Navtor
+  class FMState < Value.new(:entries, :current_pos)
+    def current_entry
+      entries[current_pos]
+    end
+  end
+
   class FileManager
-    attr_accessor :entries, :current_pos
+    attr_accessor :state
 
     def initialize
-      @entries = []
-      @current_pos = 0
+      @state = FMState.with(entries: [], current_pos: 0)
       @ui = Navtor::UI.new(self)
       ls
     end
 
     def run
-      @ui.run
+      @ui.render(@state)
+      until @ui.exit_input
+        @ui.handle_input(@state)
+        @ui.render(@state)
+      end
+      @ui.exit
     end
 
     def ls
-      @entries = list_entries
-      @ui.calculate_lines(@entries)
+      @state = @state.merge(entries: list_entries, current_pos: 0)
+      @ui.calculate_lines(@state.entries)
     end
 
     def current_entry
-      @entries[@current_pos]
+      @state.current_entry
     end
 
+    # Actions
     def to_parent_dir
       Dir.chdir('..')
       ls
@@ -44,8 +55,24 @@ module Navtor
         system("vim #{Dir.pwd}/#{current_entry}")
         #Curses.reset_prog_mode
         @ui.init_screen
-        @ui.refresh
+        @ui.refresh!
       end
+    end
+
+    def up1
+      @state = @state.merge(current_pos: @state.current_pos - 1) if @state.current_pos > 0
+    end
+
+    def down1
+      @state = @state.merge(current_pos: @state.current_pos + 1) if @state.current_pos < @state.entries.size - 1
+    end
+
+    def to_top
+      @state = @state.merge(current_pos: 0)
+    end
+
+    def to_bottom
+      @state = @state.merge(current_pos: @state.entries.size > 0 ? @state.entries.size - 1 : 0)
     end
     private
 

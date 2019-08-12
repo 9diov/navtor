@@ -97,9 +97,9 @@ module Navtor
       new_pos
     end
 
-    def status_line(entries, current_pos, clear = true)
+    def render_status_line(entries, current_pos, clear = true)
       curx, cury = stdscr.curx, stdscr.cury
-      str = "#{Dir.pwd} (#{current_pos + 1}/#{entries.size}) off=#{@state.offset} cur=#{@state.current_line} end=#{@state.end_line} w=#{@state.cols} h=#{@state.lines} input=#{@input}"
+      str = "#{Dir.pwd} (#{entries[current_pos]}) (#{current_pos + 1}/#{entries.size}) off=#{@state.offset} cur=#{@state.current_line} end=#{@state.end_line} w=#{@state.cols} h=#{@state.lines} input=#{@input}"
       if clear
         stdscr.setpos(@state.lines - 1, 0)
         stdscr.addstr(' ' * @state.cols)
@@ -112,40 +112,47 @@ module Navtor
       stdscr.refresh
     end
 
-    def render
+    def render(fm_state)
+      entries, current_pos = fm_state
       refresh!
-      new_pos = print_entries(@file_manager.entries, @file_manager.current_pos)
-      @file_manager.current_pos = new_pos unless new_pos.nil?
-      status_line(@file_manager.entries, @file_manager.current_pos)
+      new_pos = print_entries(entries, current_pos)
+      current_pos = new_pos unless new_pos.nil?
+      render_status_line(entries, current_pos)
     end
 
-    def run
-      render
-      until (@input = stdscr.getch) == 'q'
-        action = handle(@input, @file_manager.entries)
-        @file_manager.send(action) if action
-        render
-      end
-    ensure
-      self.exit
+    def get_input
+      @input = stdscr.getch
+    end
+
+    def exit_input
+      get_input == 'q'
+    end
+
+    def handle_input(fm_state)
+      action = handle(@input, fm_state.entries)
+      @file_manager.send(action) if action
     end
 
     # @return actions to be executed by file manager
     def handle(input, entries)
       if input == 'j' || input == 258
         @state = @state.merge(current_line: (@state.current_line == @state.end_line) ? @state.current_line : @state.current_line + 1)
-        @state = @state.merge(offset: @state.offset + 1) if @state.current_line == @state.end_line && @state.offset + page_size < entries.size - 1
+        @state = @state.merge(offset: @state.offset + 1) if @state.current_line == @state.end_line && @state.offset + @state.page_size < entries.size - 1
+        :down1
       elsif input == 'k' || input == 259
         @state = @state.merge(current_line: (@state.current_line == @state.start_line) ? @state.current_line : @state.current_line - 1)
         @state = @state.merge(offset: @state.offset - 1) if @state.current_line == @state.start_line && @state.offset > 0
+        :up1
       elsif input == 'g'
         @state = @state.merge(
           offset: 0,
           current_line: 0
         )
+        :to_top
       elsif input == 'G'
-        @state = @state.merge(offset: entries.size - 1 - page_size)
+        @state = @state.merge(offset: entries.size - 1 - @state.page_size)
         @state = @state.merge(current_line: @state.end_line)
+        :to_bottom
       elsif input == 'h' || input == 260
         @state = @state.merge(offset: 0)
         :to_parent_dir
