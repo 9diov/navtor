@@ -20,19 +20,8 @@ module Navtor
       @file_manager = file_manager
       init_curses
       init_screen
-      @state = UIState.with(
-        lines: Curses.lines,
-        cols: Curses.cols,
-        offset: 0, # Offset within current directory's entries
-        start_line: 0, # Start line of file list on screen, should be 0
-        end_line: Curses.lines - 1, # End line of file list on screen
-        current_line: 0
-      )
-
+      @state = init_state
       @input = nil
-      stdscr.timeout = -1
-      stdscr.scrollok(false) # Avoid scrolling
-      stdscr.idlok(true)
     end
 
     def reset
@@ -54,6 +43,20 @@ module Navtor
       Curses.init_pair(1, -1, -1) # Get defautl colors
       Curses.init_pair(2, Curses::COLOR_GREEN, -1)
       Curses.curs_set(0)
+      Curses.stdscr.timeout = -1
+      Curses.stdscr.scrollok(false) # Avoid scrolling
+      Curses.stdscr.idlok(true)
+    end
+
+    def init_state
+      UIState.with(
+        lines: Curses.lines,
+        cols: Curses.cols,
+        offset: 0, # Offset within current directory's entries
+        start_line: 0, # Start line of file list on screen, should be 0
+        end_line: Curses.lines - 1, # End line of file list on screen
+        current_line: 0
+      )
     end
 
     def close_screen
@@ -68,7 +71,7 @@ module Navtor
       Curses.stdscr
     end
 
-    def refresh
+    def refresh!
       Curses.clear
       stdscr.refresh
     end
@@ -109,18 +112,19 @@ module Navtor
       stdscr.refresh
     end
 
-    def run
-      refresh
+    def render
+      refresh!
       new_pos = print_entries(@file_manager.entries, @file_manager.current_pos)
       @file_manager.current_pos = new_pos unless new_pos.nil?
       status_line(@file_manager.entries, @file_manager.current_pos)
+    end
+
+    def run
+      render
       until (@input = stdscr.getch) == 'q'
-        refresh
         action = handle(@input, @file_manager.entries)
         @file_manager.send(action) if action
-        new_pos = print_entries(@file_manager.entries, @file_manager.current_pos)
-        @file_manager.current_pos = new_pos unless new_pos.nil?
-        status_line(@file_manager.entries, @file_manager.current_pos)
+        render
       end
     ensure
       self.exit
