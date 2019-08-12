@@ -13,14 +13,15 @@ module Navtor
 
     def initialize
       @state = FMState.with(entries: [], current_pos: 0)
-      @ui = Navtor::UI.new(self)
+      @ui = Navtor::UI.new
       ls
     end
 
     def run
       @ui.render(@state)
-      until @ui.exit_input
-        @ui.handle_input(@state)
+      until (input = @ui.get_input) == @ui.exit_input
+        action = @ui.handle_input(input, @state)
+        self.send(action) if action
         @ui.render(@state)
       end
       @ui.exit
@@ -28,7 +29,6 @@ module Navtor
 
     def ls
       @state = @state.merge(entries: list_entries, current_pos: 0)
-      @ui.calculate_lines(@state.entries)
     end
 
     def current_entry

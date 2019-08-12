@@ -16,8 +16,7 @@ module Navtor
   class UI
     attr_accessor :start_line, :end_line
 
-    def initialize(file_manager)
-      @file_manager = file_manager
+    def initialize
       init_curses
       init_screen
       @state = init_state
@@ -79,10 +78,8 @@ module Navtor
     # Print entries and return current position
     def print_entries(entries, current_pos)
       visible_entries = entries[@state.offset + @state.start_line, @state.end_line - @state.start_line + 1]
-      new_pos = nil
       visible_entries.each.with_index do |line, index|
         if index == @state.current_line
-          new_pos = index + @state.offset
           stdscr.attron(Curses.color_pair(1) | Curses::A_REVERSE) {
             stdscr.addstr("#{line}")
           }
@@ -93,8 +90,6 @@ module Navtor
       end
       stdscr.addstr("(empty)") if visible_entries.empty?
       stdscr.refresh
-
-      new_pos
     end
 
     def render_status_line(entries, current_pos, clear = true)
@@ -121,20 +116,16 @@ module Navtor
     end
 
     def get_input
-      @input = stdscr.getch
+      stdscr.getch
     end
 
     def exit_input
-      get_input == 'q'
-    end
-
-    def handle_input(fm_state)
-      action = handle(@input, fm_state.entries)
-      @file_manager.send(action) if action
+      'q'
     end
 
     # @return actions to be executed by file manager
-    def handle(input, entries)
+    def handle_input(input, fm_state)
+      entries = fm_state.entries
       if input == 'j' || input == 258
         @state = @state.merge(current_line: (@state.current_line == @state.end_line) ? @state.current_line : @state.current_line + 1)
         @state = @state.merge(offset: @state.offset + 1) if @state.current_line == @state.end_line && @state.offset + @state.page_size < entries.size - 1
