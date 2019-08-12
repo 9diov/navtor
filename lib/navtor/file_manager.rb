@@ -2,7 +2,7 @@ require 'navtor/ui'
 require 'pry'
 
 module Navtor
-  class FMState < Value.new(:entries, :current_pos)
+  class FMState < Value.new(:entries, :current_pos, :current_dir)
     def current_entry
       entries[current_pos]
     end
@@ -12,12 +12,12 @@ module Navtor
     attr_accessor :state
 
     def initialize
-      @state = FMState.with(entries: [], current_pos: 0)
+      @state = FMState.with(entries: [], current_pos: 0, current_dir: Dir.pwd)
       @ui = Navtor::UI.new
-      ls
     end
 
     def run
+      ls
       @ui.render(@state)
       until (input = @ui.get_input) == @ui.exit_input
         action = @ui.handle_input(input, @state)
@@ -27,19 +27,13 @@ module Navtor
       @ui.exit
     end
 
-    def ls
-      @state = @state.merge(entries: list_entries, current_pos: 0)
-    end
+    private
 
-    def current_entry
-      @state.current_entry
-    end
-
-    # Actions
+    # Action methods
     def to_parent_dir
       Dir.chdir('..')
       ls
-      @ui.reset
+      @state = @state.merge(current_dir: Dir.pwd)
     end
 
     def open_current
@@ -48,7 +42,7 @@ module Navtor
       if !is_file
         Dir.chdir(current_entry.match('\[(.+)\]')[1])
         ls
-        @ui.reset
+        @state = @state.merge(current_dir: Dir.pwd)
       else
         @ui.close_screen
         #Curses.def_prog_mode
@@ -74,7 +68,14 @@ module Navtor
     def to_bottom
       @state = @state.merge(current_pos: @state.entries.size > 0 ? @state.entries.size - 1 : 0)
     end
-    private
+    def ls
+      @state = @state.merge(entries: list_entries, current_pos: 0)
+    end
+
+    ## Helper methods
+    def current_entry
+      @state.current_entry
+    end
 
     # @return Array of files and directories in current directory
     def list_entries

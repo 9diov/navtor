@@ -3,7 +3,7 @@ require 'navtor/value'
 module Navtor
   class FileManager; end
 
-  class UIState < Value.new(:lines, :cols, :offset, :start_line, :end_line, :current_line)
+  class UIState < Value.new(:lines, :cols, :offset, :start_line, :end_line, :current_line, :current_dir)
     def page_size
       end_line - start_line
     end
@@ -54,7 +54,8 @@ module Navtor
         offset: 0, # Offset within current directory's entries
         start_line: 0, # Start line of file list on screen, should be 0
         end_line: Curses.lines - 1, # End line of file list on screen
-        current_line: 0
+        current_line: 0,
+        current_dir: ''
       )
     end
 
@@ -94,7 +95,7 @@ module Navtor
 
     def render_status_line(entries, current_pos, clear = true)
       curx, cury = stdscr.curx, stdscr.cury
-      str = "#{Dir.pwd} (#{entries[current_pos]}) (#{current_pos + 1}/#{entries.size}) off=#{@state.offset} cur=#{@state.current_line} end=#{@state.end_line} w=#{@state.cols} h=#{@state.lines} input=#{@input}"
+      str = "#{@state.current_dir} (#{entries[current_pos]}) (#{current_pos + 1}/#{entries.size}) off=#{@state.offset} cur=#{@state.current_line} end=#{@state.end_line} w=#{@state.cols} h=#{@state.lines} input=#{@input}"
       if clear
         stdscr.setpos(@state.lines - 1, 0)
         stdscr.addstr(' ' * @state.cols)
@@ -108,7 +109,11 @@ module Navtor
     end
 
     def render(fm_state)
-      entries, current_pos = fm_state
+      entries, current_pos, current_dir = fm_state
+      if @state.current_dir != current_dir
+        @state = @state.merge(current_dir: current_dir)
+        reset
+      end
       refresh!
       new_pos = print_entries(entries, current_pos)
       current_pos = new_pos unless new_pos.nil?
