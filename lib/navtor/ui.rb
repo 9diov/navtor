@@ -91,5 +91,14 @@ module Navtor
         :open_current
       end
     end
+
+    def submerge(&blk)
+      @renderer.close_screen!
+      #Curses.def_prog_mode
+      blk.call
+      #Curses.reset_prog_mode
+      @renderer.init_screen!
+      @renderer.refresh!
+    end
   end
 end

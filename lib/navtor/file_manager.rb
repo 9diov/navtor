@@ -44,12 +44,9 @@ module Navtor
         ls
         @state = @state.merge(current_dir: Dir.pwd)
       else
-        @ui.renderer.close_screen!
-        #Curses.def_prog_mode
-        system("vim #{Dir.pwd}/#{current_entry}")
-        #Curses.reset_prog_mode
-        @ui.renderer.init_screen!
-        @ui.renderer.refresh!
+        @ui.submerge do
+          system("vim #{Dir.pwd}/#{current_entry}")
+        end
       end
     end
 
