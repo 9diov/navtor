@@ -18,11 +18,11 @@ module Navtor
 
     def run
       ls
-      @ui.render(@state)
+      @ui.render!(@state)
       until (input = @ui.get_input) == @ui.exit_input
         action = @ui.handle_input(input, @state)
         self.send(action) if action
-        @ui.render(@state)
+        @ui.render!(@state)
       end
       @ui.exit
     end
@@ -44,12 +44,12 @@ module Navtor
         ls
         @state = @state.merge(current_dir: Dir.pwd)
       else
-        @ui.close_screen
+        @ui.renderer.close_screen!
         #Curses.def_prog_mode
         system("vim #{Dir.pwd}/#{current_entry}")
         #Curses.reset_prog_mode
-        @ui.init_screen
-        @ui.refresh!
+        @ui.renderer.init_screen!
+        @ui.renderer.refresh!
       end
     end
 
