@@ -59,13 +59,13 @@ module Navtor
     end
 
     def up1(state)
-       state = state.merge(current_pos: state.current_pos - 1) if state.current_pos > 0
-       state
+      return state if state.current_pos <= 0
+      state.merge(current_pos: state.current_pos - 1)
     end
 
     def down1(state)
-      state = state.merge(current_pos: state.current_pos + 1) if state.current_pos < state.entries.size - 1
-      state
+      return state if state.current_pos == state.entries.size
+      state.merge(current_pos: state.current_pos + 1)
     end
 
     def to_top(state)
@@ -73,7 +73,7 @@ module Navtor
     end
 
     def to_bottom(state)
-      state.merge(current_pos: state.entries.size > 0 ? state.entries.size - 1 : 0)
+      state.merge(current_pos: [state.entries.size - 1, 0].max)
     end
 
     def ls(state)
