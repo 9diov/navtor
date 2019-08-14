@@ -3,6 +3,10 @@ require 'pry'
 
 module Navtor
   class FMState < Value.new(:entries, :current_pos, :current_dir)
+    def _validate
+      raise "Invalid position #{current_pos}, entries size = #{entries.size}" unless (0..entries.size).cover?(current_pos)
+    end
+
     def current_entry
       entries[current_pos]
     end
@@ -33,7 +37,6 @@ module Navtor
     def to_parent_dir
       Dir.chdir('..')
       ls
-      @state = @state.merge(current_dir: Dir.pwd)
     end
 
     def open_current
@@ -42,7 +45,6 @@ module Navtor
       if !is_file
         Dir.chdir(current_entry.match('\[(.+)\]')[1])
         ls
-        @state = @state.merge(current_dir: Dir.pwd)
       else
         @ui.submerge do
           system("vim #{Dir.pwd}/#{current_entry}")
@@ -66,7 +68,7 @@ module Navtor
       @state = @state.merge(current_pos: @state.entries.size > 0 ? @state.entries.size - 1 : 0)
     end
     def ls
-      @state = @state.merge(entries: list_entries, current_pos: 0)
+      @state = @state.merge(entries: list_entries, current_pos: 0, current_dir: Dir.pwd)
     end
 
     ## Helper methods

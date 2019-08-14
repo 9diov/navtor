@@ -3,6 +3,12 @@ require 'navtor/renderer'
 
 module Navtor
   class UIState < Value.new(:lines, :cols, :offset, :start_line, :end_line, :current_line, :current_dir)
+    def _validate
+      raise "Invalid start_line: #{start_line}" if start_line < 0
+      raise "end_line (#{end_line}) must be larger than start_line (#{start_line})" if start_line > end_line
+      raise "Invalid current_line #{current_line}, start_line = #{start_line}, end_line = #{end_line}; current_state #{self}" if current_line < start_line || current_line > end_line
+    end
+
     def page_size
       end_line - start_line
     end
@@ -13,8 +19,6 @@ module Navtor
   end
 
   class UI
-    attr_accessor :renderer
-
     def initialize
       @renderer = Navtor::Renderer.new
       @renderer.init!
@@ -39,13 +43,11 @@ module Navtor
 
     def calculate_state(current_state, fm_state)
       entries, _, current_dir = fm_state
-      new_state = current_state.merge(end_line: [current_state.lines - 2, entries.size-1].min)
-      if new_state.current_dir != current_dir
-        new_state = new_state.merge(current_dir: current_dir)
-        new_state = new_state.reset
+      new_state = current_state
+      if current_state.current_dir != current_dir
+        new_state = current_state.merge(current_dir: current_dir).reset
       end
-
-      new_state
+      new_state.merge(end_line: [new_state.lines - 2, entries.size-1].min)
     end
 
     def render!(fm_state)
