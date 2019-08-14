@@ -16,6 +16,30 @@ module Navtor
     def reset
       self.merge(current_line: 0, offset: 0)
     end
+
+    def next_state(fm_state)
+      new_state = self
+      if current_dir != fm_state.current_dir
+        new_state = self.merge(current_dir: fm_state.current_dir).reset
+      end
+      new_state.merge(end_line: [[new_state.lines - 2, fm_state.entries.size-1].min, 0].max)
+
+      new_state
+    end
+
+    def down1(fm_state)
+      new_state = self.merge(current_line: [current_line + 1, end_line].min)
+      new_state = new_state.merge(offset: offset + 1) if current_line == end_line && offset + page_size < fm_stat.entries.size - 1
+
+      new_state
+    end
+
+    def up1(fm_state)
+      new_state = self.merge(current_line: (current_line == start_line) ? current_line : current_line - 1)
+      new_state = new_state.merge(offset: offset - 1) if current_line == start_line && offset > 0
+
+      new_state
+    end
   end
 
   class UI
@@ -46,20 +70,11 @@ module Navtor
       entries[new_state.offset + new_state.start_line, new_state.end_line - new_state.start_line + 1]
     end
 
-    def calculate_state(current_state, fm_state)
-      entries, _, current_dir = fm_state
-      new_state = current_state
-      if current_state.current_dir != current_dir
-        new_state = current_state.merge(current_dir: current_dir).reset
-      end
-      new_state.merge(end_line: [[new_state.lines - 2, entries.size-1].min, 0].max)
-    end
-
     def render!(fm_state)
       entries, current_pos, _ = fm_state
-      @state = new_state = calculate_state(@state, fm_state)
-      @renderer.render_entries!(visible_entries(new_state, entries), new_state.current_line)
-      @renderer.render_status_line!(new_state, entries, current_pos)
+      @state = @state.next_state(fm_state)
+      @renderer.render_entries!(visible_entries(@state, entries), @state.current_line)
+      @renderer.render_status_line!(@state, entries, current_pos)
     end
 
     def get_input
@@ -74,12 +89,12 @@ module Navtor
     def handle_input(input, fm_state)
       entries = fm_state.entries
       if input == 'j' || input == 258
-        @state = @state.merge(current_line: (@state.current_line == @state.end_line) ? @state.current_line : @state.current_line + 1)
-        @state = @state.merge(offset: @state.offset + 1) if @state.current_line == @state.end_line && @state.offset + @state.page_size < entries.size - 1
+        @state = @state.send(:down1, fm_state)
         :down1
       elsif input == 'k' || input == 259
-        @state = @state.merge(current_line: (@state.current_line == @state.start_line) ? @state.current_line : @state.current_line - 1)
-        @state = @state.merge(offset: @state.offset - 1) if @state.current_line == @state.start_line && @state.offset > 0
+        #@state = @state.merge(current_line: (@state.current_line == @state.start_line) ? @state.current_line : @state.current_line - 1)
+        #@state = @state.merge(offset: @state.offset - 1) if @state.current_line == @state.start_line && @state.offset > 0
+        @state = @state.send(:up1, fm_state)
         :up1
       elsif input == 'g'
         @state = @state.merge(
