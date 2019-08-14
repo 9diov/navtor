@@ -41,7 +41,7 @@ module Navtor
     # Action methods
     def to_parent_dir(state)
       Dir.chdir('..')
-      ls(state)
+      state = ls(state)
     end
 
     def open_current(state)
@@ -49,12 +49,13 @@ module Navtor
       is_file = state.current_entry.match('\[(.+)\]').nil?
       if !is_file
         Dir.chdir(state.current_entry.match('\[(.+)\]')[1])
-        ls(state)
+        state = ls(state)
       else
         @ui.submerge do
           system("vim #{Dir.pwd}/#{state.current_entry}")
         end
       end
+      state
     end
 
     def up1(state)
