@@ -11,7 +11,7 @@ require 'navtor/file_manager'
 
 def main
   fm = Navtor::FileManager.new
-  fm.run
+  fm.run(fm.initial_state)
 end
 
 main

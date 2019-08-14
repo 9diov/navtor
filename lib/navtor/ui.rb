@@ -47,7 +47,7 @@ module Navtor
       if current_state.current_dir != current_dir
         new_state = current_state.merge(current_dir: current_dir).reset
       end
-      new_state.merge(end_line: [new_state.lines - 2, entries.size-1].min)
+      new_state.merge(end_line: [[new_state.lines - 2, entries.size-1].min, 0].max)
     end
 
     def render!(fm_state)

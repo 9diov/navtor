@@ -16,17 +16,22 @@ module Navtor
     attr_accessor :state
 
     def initialize
-      @state = FMState.with(entries: [], current_pos: 0, current_dir: Dir.pwd)
       @ui = Navtor::UI.new
     end
 
-    def run
-      ls
-      @ui.render!(@state)
+    def initial_state
+      FMState.with(entries: [], current_pos: 0, current_dir: Dir.pwd)
+    end
+
+    def run(state)
+      state = ls(state)
+      @ui.render!(state)
       until (input = @ui.get_input) == @ui.exit_input
-        action = @ui.handle_input(input, @state)
-        self.send(action) if action
-        @ui.render!(@state)
+        action = @ui.handle_input(input, state)
+        if action
+          state = self.send(action, state)
+          @ui.render!(state)
+        end
       end
       @ui.exit
     end
@@ -34,47 +39,47 @@ module Navtor
     private
 
     # Action methods
-    def to_parent_dir
+    def to_parent_dir(state)
       Dir.chdir('..')
-      ls
+      ls(state)
     end
 
-    def open_current
-      return if current_entry.nil?
-      is_file = current_entry.match('\[(.+)\]').nil?
+    def open_current(state)
+      return if state.current_entry.nil?
+      is_file = state.current_entry.match('\[(.+)\]').nil?
       if !is_file
-        Dir.chdir(current_entry.match('\[(.+)\]')[1])
-        ls
+        Dir.chdir(state.current_entry.match('\[(.+)\]')[1])
+        ls(state)
       else
         @ui.submerge do
-          system("vim #{Dir.pwd}/#{current_entry}")
+          system("vim #{Dir.pwd}/#{state.current_entry}")
         end
       end
     end
 
-    def up1
-      @state = @state.merge(current_pos: @state.current_pos - 1) if @state.current_pos > 0
+    def up1(state)
+       state = state.merge(current_pos: state.current_pos - 1) if state.current_pos > 0
+       state
     end
 
-    def down1
-      @state = @state.merge(current_pos: @state.current_pos + 1) if @state.current_pos < @state.entries.size - 1
+    def down1(state)
+      state = state.merge(current_pos: state.current_pos + 1) if state.current_pos < state.entries.size - 1
+      state
     end
 
-    def to_top
-      @state = @state.merge(current_pos: 0)
+    def to_top(state)
+      state.merge(current_pos: 0)
     end
 
-    def to_bottom
-      @state = @state.merge(current_pos: @state.entries.size > 0 ? @state.entries.size - 1 : 0)
+    def to_bottom(state)
+      state.merge(current_pos: state.entries.size > 0 ? state.entries.size - 1 : 0)
     end
-    def ls
-      @state = @state.merge(entries: list_entries, current_pos: 0, current_dir: Dir.pwd)
+
+    def ls(state)
+      state.merge(entries: list_entries, current_pos: 0, current_dir: Dir.pwd)
     end
 
     ## Helper methods
-    def current_entry
-      @state.current_entry
-    end
 
     # @return Array of files and directories in current directory
     def list_entries
