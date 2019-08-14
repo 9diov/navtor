@@ -24,6 +24,8 @@ module Navtor
     end
 
     def run(state)
+      @ui.init_renderer!
+
       state = ls(state)
       @ui.render!(state)
       until (input = @ui.get_input) == @ui.exit_input

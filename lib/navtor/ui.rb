@@ -19,8 +19,13 @@ module Navtor
   end
 
   class UI
+    attr_accessor :state
+
     def initialize
       @renderer = Navtor::Renderer.new
+    end
+
+    def init_renderer!
       @renderer.init!
       @state = init_state(*@renderer.get_lines_cols)
     end

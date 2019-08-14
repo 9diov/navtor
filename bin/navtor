@@ -6,7 +6,6 @@
 # * `stdscr.scrollok(false)` need to be used to avoid new line created at the bottom
 
 $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
-require 'curses'
 require 'navtor/file_manager'
 
 def main

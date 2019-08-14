@@ -1,3 +1,5 @@
+require 'curses'
+
 module Navtor
   class Renderer
     def init!
