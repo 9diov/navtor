@@ -2,52 +2,87 @@ require 'navtor/ui'
 require 'pry'
 
 module Navtor
-  class FileManager
-    attr_accessor :entries, :current_pos
-
-    def initialize
-      @entries = []
-      @current_pos = 0
-      @ui = Navtor::UI.new(self)
-      ls
-    end
-
-    def run
-      @ui.run
-    end
-
-    def ls
-      @entries = list_entries
-      @ui.calculate_lines(@entries)
+  class FMState < Value.new(:entries, :current_pos, :current_dir)
+    def _validate
+      raise "Invalid position #{current_pos}, entries size = #{entries.size}" unless (0..entries.size).cover?(current_pos)
     end
 
     def current_entry
-      @entries[@current_pos]
+      entries[current_pos]
+    end
+  end
+
+  class FileManager
+    attr_accessor :state
+
+    def initialize
+      @ui = Navtor::UI.new
     end
 
-    def to_parent_dir
-      Dir.chdir('..')
-      ls
-      @ui.reset
+    def initial_state
+      FMState.with(entries: [], current_pos: 0, current_dir: Dir.pwd)
     end
 
-    def open_current
-      return if current_entry.nil?
-      is_file = current_entry.match('\[(.+)\]').nil?
-      if !is_file
-        Dir.chdir(current_entry.match('\[(.+)\]')[1])
-        ls
-        @ui.reset
-      else
-        @ui.close_screen
-        #Curses.def_prog_mode
-        system("vim #{Dir.pwd}/#{current_entry}")
-        #Curses.reset_prog_mode
-        @ui.init_screen
-        @ui.refresh
+    def run(state)
+      @ui.init_renderer!
+
+      state = ls(state)
+      @ui.render!(state)
+      until (input = @ui.get_input) == @ui.exit_input
+        action = @ui.handle_input(input, state)
+        if action
+          state = self.send(action, state)
+          @ui.render!(state)
+        end
       end
+      @ui.exit
     end
+
     private
+
+    # Action methods
+    def to_parent_dir(state)
+      Dir.chdir('..')
+      state = ls(state)
+    end
+
+    def open_current(state)
+      return if state.current_entry.nil?
+      is_file = state.current_entry.match('\[(.+)\]').nil?
+      if !is_file
+        Dir.chdir(state.current_entry.match('\[(.+)\]')[1])
+        state = ls(state)
+      else
+        @ui.submerge do
+          system("vim #{Dir.pwd}/#{state.current_entry}")
+        end
+      end
+      state
+    end
+
+    def up1(state)
+      return state if state.current_pos <= 0
+      state.merge(current_pos: state.current_pos - 1)
+    end
+
+    def down1(state)
+      return state if state.current_pos == state.entries.size
+      state.merge(current_pos: state.current_pos + 1)
+    end
+
+    def to_top(state)
+      state.merge(current_pos: 0)
+    end
+
+    def to_bottom(state)
+      state.merge(current_pos: [state.entries.size - 1, 0].max)
+    end
+
+    def ls(state)
+      state.merge(entries: list_entries, current_pos: 0, current_dir: Dir.pwd)
+    end
+
+    ## Helper methods
 
     # @return Array of files and directories in current directory
     def list_entries

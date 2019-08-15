@@ -114,10 +114,12 @@ module Navtor
           new(*hash.values_at(*self::VALUE_ATTRS))
         end
 
-        def self.defaults(defaults=nil)
+        def self.defaults(defaults=nil, &block)
           return self.class_variable_get(:@@defaults) if defaults.nil?
 
           self.class_variable_set(:@@defaults, defaults)
+
+          self.class_eval(&block) if block
           self
         end
 
