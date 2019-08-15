@@ -10,6 +10,24 @@ module Navtor
     def current_entry
       entries[current_pos]
     end
+
+    def up1
+      return self if current_pos <= 0
+      self.merge(current_pos: current_pos - 1)
+    end
+
+    def down1
+      return self if current_pos == entries.size
+      self.merge(current_pos: state.current_pos + 1)
+    end
+
+    def to_top
+      self.merge(current_pos: 0)
+    end
+
+    def to_bottom
+      self.merge(current_pos: [entries.size - 1, 0].max)
+    end
   end
 
   class FileManager
@@ -61,21 +79,19 @@ module Navtor
     end
 
     def up1(state)
-      return state if state.current_pos <= 0
-      state.merge(current_pos: state.current_pos - 1)
+      state.up1
     end
 
     def down1(state)
-      return state if state.current_pos == state.entries.size
-      state.merge(current_pos: state.current_pos + 1)
+      state.down1
     end
 
     def to_top(state)
-      state.merge(current_pos: 0)
+      state.to_top
     end
 
     def to_bottom(state)
-      state.merge(current_pos: [state.entries.size - 1, 0].max)
+      state.to_bottom
     end
 
     def ls(state)
