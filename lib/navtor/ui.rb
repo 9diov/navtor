@@ -22,14 +22,14 @@ module Navtor
       if current_dir != fm_state.current_dir
         new_state = self.merge(current_dir: fm_state.current_dir).reset
       end
-      new_state.merge(end_line: [[new_state.lines - 2, fm_state.entries.size-1].min, 0].max)
+      new_state = new_state.merge(end_line: [[new_state.lines - 2, fm_state.entries.size-1].min, 0].max)
 
       new_state
     end
 
     def down1(fm_state)
       new_state = self.merge(current_line: [current_line + 1, end_line].min)
-      new_state = new_state.merge(offset: offset + 1) if current_line == end_line && offset + page_size < fm_stat.entries.size - 1
+      new_state = new_state.merge(offset: offset + 1) if new_state.current_line == new_state.end_line && new_state.offset + new_state.page_size < fm_stat.entries.size - 1
 
       new_state
     end
@@ -92,8 +92,6 @@ module Navtor
         @state = @state.send(:down1, fm_state)
         :down1
       elsif input == 'k' || input == 259
-        #@state = @state.merge(current_line: (@state.current_line == @state.start_line) ? @state.current_line : @state.current_line - 1)
-        #@state = @state.merge(offset: @state.offset - 1) if @state.current_line == @state.start_line && @state.offset > 0
         @state = @state.send(:up1, fm_state)
         :up1
       elsif input == 'g'
