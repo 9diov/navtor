@@ -36,9 +36,29 @@ module Navtor
 
     def up1(fm_state)
       new_state = self.merge(current_line: (current_line == start_line) ? current_line : current_line - 1)
-      new_state = new_state.merge(offset: offset - 1) if current_line == start_line && offset > 0
+      new_state = new_state.merge(offset: offset - 1) if new_state.current_line == new_state.start_line && new_state.offset > 0
 
       new_state
+    end
+
+    def to_top
+      self.merge(
+        offset: 0,
+        current_line: 0
+      )
+    end
+
+    def to_bottom(fm_state)
+      self.merge(offset: fm_state.entries.size - 1 - page_size,
+                 current_line: end_line)
+    end
+
+    def to_parent_dir
+      self.merge(offset: 0)
+    end
+
+    def visible_entries(entries)
+      entries[offset + start_line, end_line - start_line + 1]
     end
   end
 
@@ -66,14 +86,10 @@ module Navtor
       )
     end
 
-    def visible_entries(new_state, entries)
-      entries[new_state.offset + new_state.start_line, new_state.end_line - new_state.start_line + 1]
-    end
-
     def render!(fm_state)
       entries, current_pos, _ = fm_state
       @state = @state.next_state(fm_state)
-      @renderer.render_entries!(visible_entries(@state, entries), @state.current_line)
+      @renderer.render_entries!(@state.visible_entries(entries), @state.current_line)
       @renderer.render_status_line!(@state, entries, current_pos)
     end
 
@@ -87,7 +103,6 @@ module Navtor
 
     # @return actions to be executed by file manager
     def handle_input(input, fm_state)
-      entries = fm_state.entries
       if input == 'j' || input == 258
         @state = @state.send(:down1, fm_state)
         :down1
@@ -95,17 +110,12 @@ module Navtor
         @state = @state.send(:up1, fm_state)
         :up1
       elsif input == 'g'
-        @state = @state.merge(
-          offset: 0,
-          current_line: 0
-        )
+        @state = @state.send(:to_top)
         :to_top
       elsif input == 'G'
-        @state = @state.merge(offset: entries.size - 1 - @state.page_size)
-        @state = @state.merge(current_line: @state.end_line)
+        @state = @state.send(:to_bottom, fm_state)
         :to_bottom
       elsif input == 'h' || input == 260
-        @state = @state.merge(offset: 0)
         :to_parent_dir
       elsif input == 'l' || input == 261
         :open_current
