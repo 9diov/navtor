@@ -29,7 +29,7 @@ module Navtor
 
     def down1(fm_state)
       new_state = self.merge(current_line: [current_line + 1, end_line].min)
-      new_state = new_state.merge(offset: offset + 1) if new_state.current_line == new_state.end_line && new_state.offset + new_state.page_size < fm_stat.entries.size - 1
+      new_state = new_state.merge(offset: offset + 1) if new_state.current_line == new_state.end_line && new_state.offset + new_state.page_size < fm_state.entries.size - 1
 
       new_state
     end
