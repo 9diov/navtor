@@ -16,7 +16,7 @@ describe Navtor::UIState do
   }
   let (:fm_state) {
     Navtor::FMState.with(
-      entries: ['a.txt', '[b]'],
+      entries: ['alice.txt', '[bill]', 'celine.mp3', 'david.xlsx'],
       current_pos: 0,
       current_dir: '/tmp'
     )
@@ -30,9 +30,9 @@ describe Navtor::UIState do
   it 'can get next state' do
     expect(state.next_state(fm_state).current_line).to eq(0)
     expect(state.next_state(fm_state).down1(fm_state).current_line).to eq(1)
-    expect(state.next_state(fm_state).down1(fm_state).down1(fm_state).current_line).to eq(1)
+    expect(state.next_state(fm_state).down1(fm_state).down1(fm_state).current_line).to eq(2)
     expect(state.next_state(fm_state).down1(fm_state).down1(fm_state).to_top.current_line).to eq(0)
-    expect(state.next_state(fm_state).down1(fm_state).down1(fm_state).to_bottom(fm_state).current_line).to eq(1)
+    expect(state.next_state(fm_state).down1(fm_state).down1(fm_state).to_bottom(fm_state).current_line).to eq(3)
   end
 end
 

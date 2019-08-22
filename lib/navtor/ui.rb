@@ -1,3 +1,4 @@
+require 'navtor/helper'
 require 'navtor/value'
 require 'navtor/renderer'
 
@@ -18,13 +19,13 @@ module Navtor
     end
 
     def next_state(fm_state)
-      new_state = self
-      if current_dir != fm_state.current_dir
-        new_state = self.merge(current_dir: fm_state.current_dir).reset
+      self.then do |new_state|
+        current_dir != fm_state.current_dir ?
+          new_state.merge(current_dir: fm_state.current_dir).reset :
+          new_state
+      end.then do |new_state|
+        new_state.merge(end_line: [[new_state.lines - 2, fm_state.entries.size-1].min, 0].max)
       end
-      new_state = new_state.merge(end_line: [[new_state.lines - 2, fm_state.entries.size-1].min, 0].max)
-
-      new_state
     end
 
     def down1(fm_state)
