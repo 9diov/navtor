@@ -18,7 +18,7 @@ module Navtor
 
     def down1
       return self if current_pos == entries.size
-      self.merge(current_pos: state.current_pos + 1)
+      self.merge(current_pos: current_pos + 1)
     end
 
     def to_top
