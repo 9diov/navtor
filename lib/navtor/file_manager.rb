@@ -53,7 +53,7 @@ module Navtor
           @ui.render!(state)
         end
       end
-      @ui.exit
+      @ui.exit!
     end
 
     private

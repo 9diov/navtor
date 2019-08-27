@@ -131,5 +131,9 @@ module Navtor
       @renderer.init_screen!
       @renderer.refresh!
     end
+
+    def exit!
+      @renderer.exit!
+    end
   end
 end
