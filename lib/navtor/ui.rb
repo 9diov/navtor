@@ -1,3 +1,4 @@
+# typed: ignore
 require 'navtor/helper'
 require 'navtor/value'
 require 'navtor/renderer'

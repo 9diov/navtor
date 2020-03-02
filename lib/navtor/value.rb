@@ -1,3 +1,4 @@
+# typed: false
 # Simple immutable value objects for ruby.
 #
 # @example Make a new value class:

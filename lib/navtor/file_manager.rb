@@ -1,3 +1,4 @@
+# typed: ignore
 require 'navtor/ui'
 require 'pry'
 

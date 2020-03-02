@@ -1,3 +1,4 @@
+# typed: false
 module Navtor
   class UnionValue
     # tagging for later type check using .accept_class?
